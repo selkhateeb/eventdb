@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		<script src="../eventdb.js" type="application/javascript"></script>
+		<script src="todoApp.js" type="application/javascript"></script>
+		<script type="application/javascript">
+			var app = new todoApp();
+			app.init();
+		</script>
+		<title>Todo App</title>
+	</head>
+	<body>
+		<div>
+			<header>
+			</header>
+			<nav>
+			</nav>
+			<ul id="todoItems">
+				
+			</ul>
+			<input type="text" placeholder="todo item" id="item" /><button onclick="app.addButton();">add</button>
+			<footer>
+
+			</footer>
+		</div>	
+	</body>
+</html>

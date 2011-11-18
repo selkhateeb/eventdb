@@ -208,38 +208,3 @@ eventdb.event.where = null;//url, browser, mobile
 eventdb.event.how = null;//how it happened? user clicked
 
 
-var edb = null;
-function init() {
-	var indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB;
-	
-	if('webkitIndexedDB' in window) {
-		window.IDBTransaction = window.webkitIDBTransaction;
-		window.IDBKeyRange = window.webkitIDBKeyRange;
-	}
-
-	edb = new eventdb(indexedDB);
-	edb.open(function(e){
-		console.log("opened");
-		edb.getAllEvents(function(e){
-			console.log('getall');
-			addTodo(e.when);
-		});
-	});
-}
-window.addEventListener("DOMContentLoaded", init, false);
-
-function addButton(){
-	var event = new eventdb.event();
-	var item = document.getElementById('item');
-
-	event.what = item.value;
-	edb.addEvent(event, function(e){
-		addTodo(item.value);
-	}, edb.onerror);
-};
-
-function addTodo(item){
-	var items = document.getElementById('todoItems');
-	items.innerHTML += '<li>' + item + '</li>';
-	document.getElementById('item').value = '';
-};
