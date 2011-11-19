@@ -19,10 +19,10 @@ todoApp.prototype.init = function() {
 	}
 	var THIS = this;
 	this.eventdb = new eventdb(indexedDB);
-	this.eventdb.open(function(e){
-		console.log("opened");
-		THIS.eventdb.getAllEvents(function(e){
-			THIS.addTodo(e.when);
+	this.eventdb.open(function(){
+		// console.log("opened");
+		THIS.eventdb.getAll('todo', function(e){
+			THIS.addTodo(e.item);
 		});
 	});
 };
@@ -31,10 +31,29 @@ todoApp.prototype.addButton = function() {
 	var event = new eventdb.event();
 	var item = document.getElementById('item');
 	var THIS = this;
-	event.what = item.value;
+	event.what = {
+		store: 'todo',
+		operation: 'put',
+		changed_from: null,
+		changed_to: {item: item.value},
+		};
+	event.where = {
+		url: window.location.href,
+		elementId: 'item'
+	};
+	event.how = {
+		browser_event: 'onclick',
+		src_element: 'button'
+	};
+	
+	event.who = 'selkhateeb';
+	
+	
 	this.eventdb.addEvent(event, function(e){
 		THIS.addTodo(item.value);
 	}, this.eventdb.onerror);
+	
+	this.eventdb.apply();
 };
 
 todoApp.prototype.addTodo = function(item){

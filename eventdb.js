@@ -46,16 +46,14 @@ eventdb.prototype.open = function(onsuccess) {
 	var request = eventdb.indexedDB.open(eventdb.DBNAME);
 	var THIS = this;
 	request.onsuccess = function(e) {
-		console.log(e);
 		THIS.db = e.target.result;
 		var db = THIS.db;
 		// We can only create Object stores in a setVersion transaction;
 		if(eventdb.DBVERSION !== db.version) {
 			THIS.createObjectStore_(eventdb.OBJECT_STORE_NAME, {keyPath: "when"}, onsuccess);
 		} else {
-			THIS.getAllEvents();
+			onsuccess();
 		}
-		console.log("request success", e);
 	};
 	request.onerror = this.onerror;
 };
@@ -68,18 +66,16 @@ eventdb.prototype.open = function(onsuccess) {
  * @private
  */
 eventdb.prototype.createObjectStore_ = function(name, options, callback){
-	console.debug("createOS");
 	var THIS = this;
 	eventdb.DBVERSION += 0.1;
 	var setVrequest = this.db.setVersion(eventdb.DBVERSION);
-	console.log(setVrequest);
 	
 	// onsuccess is the only place we can create Object Stores
 	setVrequest.onerror = this.onerror;
 	setVrequest.onsuccess = function(e) {
-		console.log(e);
 		if(THIS.db.objectStoreNames.contains(name)) {
 //			THIS.db.deleteObjectStore(name);
+			callback();
 			return;
 		}
 
@@ -161,7 +157,6 @@ eventdb.prototype.getAllEvents = function(onevent) {
 		if(!!result == false)
 			return;
 
-		console.log(result.value);
 		onevent(result.value);
 		result.continue();
 	};
@@ -186,25 +181,55 @@ eventdb.prototype.getAll = function(storeName, onrecord) {
 		if(!result)
 			return;
 
-		console.log(result.value);
 		onrecord(result.value);
 		result.continue();
 	};
 	cursorRequest.onerror = this.onerror;
 };
 
-
 /**
- * @constructor event
+ * applys local changes
  */
-eventdb.event = function() {
-	this.when = new Date().getTime();
+eventdb.prototype.apply = function(){
+  var self = this;
+  this.getAllEvents(function(e){
+  		self.applyInternal_(e);
+  	});
 };
 
-eventdb.event.when = null;
-eventdb.event.who = null;
-eventdb.event.what = null;//action, changed_from, changed_to
-eventdb.event.where = null;//url, browser, mobile
-eventdb.event.how = null;//how it happened? user clicked
+/**
+ * applys local changes
+ * @param {eventdb.event} event event record
+ * @private
+ */
+eventdb.prototype.applyInternal_ = function(event){
+	if(event.what.operation === 'put'){
+		this.handlePutOperation_(event.what.store, event.what.changed_to);
+	}
+	this.deleteEvent(event.when);
+};
 
+eventdb.prototype.handlePutOperation_ = function(store_name, object){
+	console.log("store name", store_name);
+	var self = this;
+	if(!this.db.objectStoreNames.contains(store_name)){
+		this.createObjectStore_(store_name, {autoIncrement: true, keyPath: 'id'}, function(){
+			self.handlePutOperation_(store_name, object);
+		});
+		return;
+	}
+	var trans = this.db.transaction([store_name], IDBTransaction.READ_WRITE);
+	console.log(trans);
+	var store = trans.objectStore(store_name);
+
+	var request = store.put(object);
+
+	request.onsuccess = function(e){
+		console.log('handleputSuccess', e);
+	};
+	request.onerror = function(e){
+		console.log('handleputError', e);
+	};
+
+};
 
